@@ -1,0 +1,95 @@
+\documentclass{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+
+\usepackage{amssymb,amsmath,mathtools}
+\usepackage{array}
+
+\usepackage{qqnumbas}
+
+\beamertemplatenavigationsymbolsempty
+
+\usetheme{Boadilla}
+
+%% Contador que nos lleve el numero de pregunta. Automatizamos el titulo de los frames.
+\newcounter{numpregunta}[section]
+\addtobeamertemplate{frametitle}{%
+	\def\insertframetitle{%
+		\stepcounter{numpregunta}
+		\ifx\insertsectionhead\empty
+			\relax
+		\else
+			\insertsectionhead. Pregunta \thesection.\arabic{numpregunta}
+		\fi
+	}
+}{}
+\makeatletter
+\CheckCommand*\beamer@checkframetitle{\@ifnextchar\bgroup\beamer@inlineframetitle{}}
+\renewcommand*\beamer@checkframetitle{\global\let\beamer@frametitle\relax\@ifnextchar\bgroup\beamer@inlineframetitle{}}
+\makeatother
+
+
+%% Metadatos
+\title[PR-Prueba]{Preguntas Rápidas de prueba para importar a Numbas}
+\author[M. Blanc]{Manuel Blanc}
+\institute[UAM]{Universidad Autónoma de Madrid}
+
+\begin{document}
+\maketitle
+
+\section{Pruebas}
+
+\begin{frame}
+\quickquestion{%
+name/.expanded = {PR.\jobname.\thesection.\thenumpregunta},
+prompt = {%
+	Esta pregunta es muy basica. Tiene un poco de matematicas: $2\times 3$ y $B$.
+	Pero no puede tener varios parrafos!!!
+},
+choices={
+	{Eleccion con matematicas: $e^{i\pi} + 1 = 0$},
+	{Eleccion con puro texto},
+	{Eleccion una matriz:
+	$$\left\{\begin{array}{rrrr}
+		42x	& 42y	& z 	& = 0	\\
+		37x	&    	&   	& = 0	\\
+		   	& 2y 	& +z	& = 0	\\
+		2x 	&    	& z 	& = 0	%%
+	\end{array}\right\}
+	$$},
+	{Nada aqui de momento}
+},
+answer={c},
+}
+\end{frame}
+
+
+\begin{frame}
+\quickquestion{%
+name/.expanded = {PR.\jobname.\thesection.\thenumpregunta},
+prompt = {%
+	Esta pregunta es muy basica. Tiene un poco de matematicas: $2\times 3$ y $B$.
+	Pero no puede tener varios parrafos!!!
+},
+choices={
+	{Eleccion con matematicas: $e^{i\pi} + 1 = 0$},
+	{Eleccion con puro texto},
+	{Eleccion una matriz:
+	$$\left\{\begin{array}{rrrr}
+		42x	& 42y	& z 	& = 0	\\
+		37x	&    	&   	& = 0	\\
+		   	& 2y 	& +z	& = 0	\\
+		2x 	&    	& z 	& = 0	%%
+	\end{array}\right\}
+	$$},
+	{Nada aqui de momento}
+},
+answer={c},
+}
+\end{frame}
+
+
+\end{document}
+

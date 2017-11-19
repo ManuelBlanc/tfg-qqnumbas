@@ -1,0 +1,163 @@
+%% Definicion del paquete
+\NeedsTeXFormat{LaTeX2e}[1994/06/01]
+\ProvidesPackage{qqnumbas}[2017/11/18
+	Generate Numbas questions as a byproduct of compiling multiple-choice questions]
+
+%% Dependencias
+\RequirePackage{pgfkeys}
+\RequirePackage{pgffor}
+\RequirePackage{xstring}
+
+%% Macros auxiliares para proteger los backslashes de la salida.
+%% Fuente: https://tex.stackexchange.com/a/402045/90126 (egreg)
+\begingroup\lccode`\|=`\\
+\lowercase{\endgroup\def\DoubleBackslashes#1{\StrSubstitute{\detokenize{#1}}{|}{||}}}
+\newcommand{\doublebackslashwrite}[2]{%
+  \DoubleBackslashes{#2}[\dbstemp]%
+  \immediate\write#1{\dbstemp}%
+}
+
+%% Inicializamos el fichero auxiliar que contendra el examen y escribimos la
+%% cabecera del examen de numbas. Si tenemos que escribir un corchete sin pareja,
+%% debemos usar \@charlb o \@charrb
+\newwrite\@numbasexam
+\immediate\openout\@numbasexam=\jobname.numbas.exam
+\immediate\write\@numbasexam{// Numbas version: exam_question_groups} % En su propia linea
+\immediate\write\@numbasexam{%
+\@charlb
+	"name":"PR - \jobname",
+	"extensions":[],
+	"resources":[],
+	"navigation":{
+		"allowregen":false,
+		"showfrontpage":false,
+		"preventleave":false
+	},
+	"question_groups":[
+		\@charlb
+			"questions":[
+}
+
+%% Cuando acabe el documento, escribimos el pie del examen de numbas.
+\AtEndDocument{%
+	\immediate\write\@numbasexam{%
+			],
+			"pickingStrategy":"all-ordered"
+		\@charrb
+	]
+\@charrb
+}
+\immediate\closeout\@numbasexam
+} %/AtEndDocument
+
+%% Definimos una macro que recibe una definicion de una pregunta y genera tanto
+%% el LaTeX como el JSON.
+\newcommand{\quickquestion}[1]{%
+\pgfqkeys{/qqnumbas}{%
+	%% Definicion de variables
+	name/.store in = \numbas@name,
+	prompt/.store in = \numbas@prompt,
+	shuffleChoices/.store in = \numbas@shuffleChoices,
+	showCorrectAnswer/.store in = \numbas@showCorrectAnswer,
+	showFeedbackIcon/.store in = \numbas@showFeedbackIcon,
+	matrix/.store in = \numbas@matrix,
+	choices/.store in=\numbas@choices,
+	%% Valores por defecto
+	name = {Undefined name!},
+	prompt = {Undefined prompt!},
+	shuffleChoices = {false},
+	showCorrectAnswer = {false},
+	showFeedbackIcon = {false},
+	matrix = {0,0,0,0},
+	choices = {Opcion A, Opcion B, Opcion C, Opcion D},
+	%% Macro de utilidad para asignar todos los puntos
+	answer/a/.style = {matrix={1,0,0,0}},
+	answer/b/.style = {matrix={0,1,0,0}},
+	answer/c/.style = {matrix={0,0,1,0}},
+	answer/d/.style = {matrix={0,0,0,1}},
+	answer/.is choice,
+	%% Codigo para producir el LaTeX
+	write latex output/.code={
+		\numbas@prompt
+		\bigskip
+		\begin{enumerate}[A.]
+			\foreach \choice in \numbas@choices {\item \choice}
+		\end{enumerate}
+	},
+	%% Codigo para producir el examen
+	write numbas output/.code={
+		%% Coma inicial si es la primera pregunta
+		\ifdefined\NotFirstQuestion
+			\immediate\write\@numbasexam{,}%
+		\else
+			\xdef\NotFirstQuestion{}
+		\fi
+		%% Primera parte de una pregunta individual
+		\expandafter\DoubleBackslashes\expandafter{\numbas@name}[\numbas@name@tmp]
+		\expandafter\DoubleBackslashes\expandafter{\numbas@prompt}[\numbas@prompt@tmp]
+		\immediate\write\@numbasexam{%
+			\@charlb
+				"rulesets":{},
+				"metadata":{
+					"licence":"None specified",
+					"description":""
+				},
+				"variablesTest":{
+					"condition":"",
+					"maxRuns":100
+				},
+				"statement":"",
+				"name":"\numbas@name@tmp",
+				"parts":[
+					\@charlb
+						"variableReplacementStrategy":"originalfirst",
+						"scripts":{},
+						"displayType":"radiogroup",
+						"type":"1_n_2",
+						"displayColumns":"1",
+						"variableReplacements":[],
+						"marks":0,
+						"maxMarks":0,
+						"minMarks":0,
+						"shuffleChoices":false,
+						"showCorrectAnswer":false,
+						"showFeedbackIcon":false,
+						"matrix":[\expandonce\numbas@matrix],
+						"distractors":[],
+						"prompt":"\numbas@prompt@tmp",
+						"choices":[%
+		}
+		%% Tenemos que manejar las opciones de manera especial para asegurarnos
+		%% de que no quede una coma al final y de que estan bien expandidas.
+		\foreach \choice [count=\pos] in \numbas@choices
+		{
+			\expandafter\DoubleBackslashes\expandafter{\choice}[\choice@tmp]%
+			%% Es el primer elemento?
+			\immediate\write\@numbasexam{%
+				\ifnum\pos=1%
+					"\choice@tmp"%\jsonstring"% Solo el elemento
+				\else%
+					,"\choice@tmp"%"\jsonstring"% Prefijamos con una coma
+				\fi%
+			}
+		}
+		%% Parte final de una pregunta individual
+		\immediate\write\@numbasexam{%
+						]
+					\@charrb
+				],
+				"variables":{},
+				"variable_groups":[],
+				"preamble":{"js":"","css":""},
+				"tags":[],
+				"functions":{},
+				"extensions":[],
+				"ungrouped_variables":[],
+				"advice":""
+			\@charrb
+		}
+	},
+}
+\pgfqkeys{/qqnumbas}{#1}
+\pgfqkeys{/qqnumbas}{write latex output,write numbas output}
+} %/quickquestion
